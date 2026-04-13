@@ -97,6 +97,9 @@ documents:
 - the verification path used on Ubuntu 24.04
 - which public references helped and where they fell short
 
+The package boundary and Rust decision live in the umbrella repo ADR:
+`wechat-sync/docs/adr/2026-04-12-extractor-boundary.md`.
+
 ## Tests
 
 ```bash
