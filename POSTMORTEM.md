@@ -67,11 +67,11 @@ rows in the real stack.
 These references were useful, but none of them solved the exact Linux `arm64`
 WeChat `4.1.1` path by themselves.
 
-### `WeChat-Synced/wechat-decrypt`
+### `ylytdeng/wechat-decrypt`
 
 Repo:
 
-- <https://github.com/WeChat-Synced/wechat-decrypt>
+- <https://github.com/ylytdeng/wechat-decrypt>
 
 What helped:
 
@@ -102,11 +102,11 @@ What did not hold as-is:
   account for the transient launcher-side capture problem we hit on `arm64`
   `4.1.1`
 
-### `WeChat-Synced/MimicWX-Linux`
+### `PigeonCoders/MimicWX-Linux`
 
 Repo:
 
-- <https://github.com/WeChat-Synced/MimicWX-Linux>
+- <https://github.com/PigeonCoders/MimicWX-Linux>
 
 What helped:
 
