@@ -39,6 +39,12 @@ pip install -U pip
 pip install -e '.[dev]'
 ```
 
+Pinned install from GitHub:
+
+```bash
+pip install "wechat-key-extractor @ git+https://github.com/WeChat-Synced/wechat-key-extractor.git@v0.1.1"
+```
+
 ## CLI
 
 Default usage:
@@ -91,8 +97,16 @@ documents:
 - the verification path used on Ubuntu 24.04
 - which public references helped and where they fell short
 
+The package boundary and Rust decision live in the umbrella repo ADR:
+`wechat-sync/docs/adr/2026-04-12-extractor-boundary.md`.
+
 ## Tests
 
 ```bash
 pytest
 ```
+
+## Releases
+
+Tags named `v*` run the GitHub Actions release test workflow in
+`.github/workflows/release.yml`.

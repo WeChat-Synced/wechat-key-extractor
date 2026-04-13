@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+from importlib.metadata import version
 import json
 import struct
 from pathlib import Path
@@ -16,6 +17,10 @@ from wechat_key_extractor.linux import (
     _validate_key_candidates,
     _verify_page_hmac,
 )
+
+
+def test_package_version_is_explicit() -> None:
+    assert version("wechat-key-extractor") == "0.1.1"
 
 
 def _build_encrypted_page(raw_key: bytes, salt: bytes) -> bytes:
