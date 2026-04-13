@@ -39,6 +39,12 @@ pip install -U pip
 pip install -e '.[dev]'
 ```
 
+Pinned install from GitHub:
+
+```bash
+pip install "wechat-key-extractor @ git+https://github.com/WeChat-Synced/wechat-key-extractor.git@v0.1.1"
+```
+
 ## CLI
 
 Default usage:
@@ -96,3 +102,8 @@ documents:
 ```bash
 pytest
 ```
+
+## Releases
+
+Tags named `v*` run the GitHub Actions release test workflow in
+`.github/workflows/release.yml`.
