@@ -78,14 +78,16 @@ Example output:
 
 ## Version-specific note
 
-The `gdb` fallback currently uses the Linux `arm64` WeChat 4.1.1 launcher
-raw-store offset:
+The current Linux `arm64` WeChat `4.1.1` launcher raw-store offset is:
 
 ```text
 base + 0x665E4E0
 ```
 
-If Tencent changes the binary layout, that offset may need to be updated.
+If Tencent changes the binary layout, do not guess a replacement offset from
+memory alone. Use the version-update procedure in
+[`OFFSET_UPDATE_PLAYBOOK.md`](OFFSET_UPDATE_PLAYBOOK.md) and only record a new
+offset after the candidate key has been validated against real WCDB files.
 
 ## Postmortem
 
