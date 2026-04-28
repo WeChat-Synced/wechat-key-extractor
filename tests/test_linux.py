@@ -184,6 +184,67 @@ def test_probe_keys_reuses_valid_cache_across_pid_change(mock_pid, mock_find_db_
     mock_save_keys.assert_called_once_with(4242)
 
 
+@patch("wechat_key_extractor.linux._find_db_files")
+@patch("wechat_key_extractor.linux.find_wechat_pid")
+def test_probe_keys_ignores_same_pid_cache_when_current_db_root_is_empty(
+    mock_pid,
+    mock_find_db_files,
+    tmp_path: Path,
+) -> None:
+    cache_path = tmp_path / "keys.json"
+    cache_path.write_text(json.dumps({
+        "pid": 4242,
+        "keys": {"/stale-root/message_0.db": "ab" * 32},
+    }))
+
+    mock_pid.return_value = 4242
+    mock_find_db_files.return_value = []
+
+    ke = KeyExtractor(tmp_path, cache_path)
+    report = ke.probe_keys()
+
+    assert report.failure_reason == "no_database_files"
+    assert report.keys == {}
+
+
+@patch("wechat_key_extractor.linux._validate_key_candidates")
+@patch("wechat_key_extractor.linux._capture_gdb_key_candidates")
+@patch("wechat_key_extractor.linux._build_db_salts")
+@patch("wechat_key_extractor.linux._scan_memory_for_keys")
+@patch("wechat_key_extractor.linux._find_db_files")
+@patch("wechat_key_extractor.linux.find_wechat_pid")
+def test_probe_keys_continues_after_partial_memory_scan(
+    mock_pid,
+    mock_find_db_files,
+    mock_scan,
+    mock_build_db_salts,
+    mock_capture,
+    mock_validate,
+    tmp_path: Path,
+) -> None:
+    db_a = tmp_path / "message_0.db"
+    db_b = tmp_path / "biz_message_0.db"
+    db_a.write_bytes(b"not-sqlite-a")
+    db_b.write_bytes(b"not-sqlite-b")
+
+    mock_pid.return_value = 4242
+    mock_find_db_files.return_value = [db_a, db_b]
+    mock_scan.return_value = {str(db_a): "aa" * 32}
+    mock_build_db_salts.return_value = {str(db_b): bytes(range(16))}
+    mock_capture.return_value = [("bb" * 32, None)]
+    mock_validate.return_value = {str(db_b): "bb" * 32}
+
+    ke = KeyExtractor(tmp_path, tmp_path / "keys.json")
+    report = ke.probe_keys()
+
+    assert report.keys == {
+        str(db_a): "aa" * 32,
+        str(db_b): "bb" * 32,
+    }
+    assert mock_capture.call_count == 1
+    mock_validate.assert_called_once()
+
+
 def test_scan_memory_for_keys_validates_xkey_payload(tmp_path: Path) -> None:
     raw_key_hex = "fd25cc8a040bb79255240e4d7f1031dcd02dfb4e808ca64a5a6c6466a8bd506d"
     salt_hex = "64e67b3cf3cf51e45638136d0b5c1dfd"

@@ -487,14 +487,6 @@ class KeyExtractor:
                 failure_reason="wechat_not_running",
             )
 
-        if pid == self._pid and self._keys:
-            return KeyExtractionReport(
-                pid=pid,
-                db_files_found=len(self._keys),
-                keys=self._keys,
-                used_cached_keys=True,
-            )
-
         db_files = _find_db_files(self.wechat_db_dir)
         if not db_files:
             return KeyExtractionReport(
@@ -504,37 +496,53 @@ class KeyExtractor:
                 failure_reason="no_database_files",
             )
 
+        keys: dict[str, str] = {}
+        used_cached_keys = False
         if self._keys:
             cached_keys = _validate_cached_keys(self._keys, db_files)
             if cached_keys:
-                self._keys = cached_keys
-                self._pid = pid
-                self._save_keys(pid)
-                return KeyExtractionReport(
-                    pid=pid,
-                    db_files_found=len(db_files),
-                    keys=self._keys,
-                    used_cached_keys=True,
-                )
+                keys.update(cached_keys)
+                used_cached_keys = True
+                if len(keys) == len(db_files):
+                    self._keys = keys
+                    self._pid = pid
+                    self._save_keys(pid)
+                    return KeyExtractionReport(
+                        pid=pid,
+                        db_files_found=len(db_files),
+                        keys=self._keys,
+                        used_cached_keys=True,
+                    )
 
-        keys: dict[str, str] = {}
         for attempt in range(1, EXTRACTION_ATTEMPTS + 1):
-            keys = _scan_memory_for_keys(pid, db_files, self.pattern)
-            if keys:
+            unresolved = [db_path for db_path in db_files if str(db_path) not in keys]
+            if not unresolved:
+                break
+            scanned = _scan_memory_for_keys(pid, unresolved, self.pattern)
+            if scanned:
+                keys.update(scanned)
+            if len(keys) == len(db_files):
                 break
             if attempt < EXTRACTION_ATTEMPTS:
                 time.sleep(EXTRACTION_INTERVAL_SECONDS)
 
-        if not keys:
-            db_salts = _build_db_salts(db_files)
+        if len(keys) < len(db_files):
+            unresolved = [db_path for db_path in db_files if str(db_path) not in keys]
+            db_salts = _build_db_salts(unresolved)
             gdb_candidates = _capture_gdb_key_candidates(pid)
-            keys = _validate_key_candidates(gdb_candidates, db_salts)
+            if db_salts:
+                keys.update(_validate_key_candidates(gdb_candidates, db_salts))
 
         if keys:
             self._keys = keys
             self._pid = pid
             self._save_keys(pid)
-            return KeyExtractionReport(pid=pid, db_files_found=len(db_files), keys=self._keys)
+            return KeyExtractionReport(
+                pid=pid,
+                db_files_found=len(db_files),
+                keys=self._keys,
+                used_cached_keys=used_cached_keys,
+            )
 
         return KeyExtractionReport(
             pid=pid,
